@@ -63,6 +63,9 @@ namespace XLua
 
         public LuaEnv()
         {
+            /* 
+            LuaAPI.xlua_get_lib_version()用于获取Xlua库的版本信息，如果库版本和C#所需不一致，容易定位和排查问题
+            */
             if (LuaAPI.xlua_get_lib_version() != LIB_VERSION_EXPECT)
             {
                 throw new InvalidProgramException("wrong lib version expect:"
@@ -73,6 +76,15 @@ namespace XLua
             lock(luaEnvLock)
 #endif
             {
+                /*
+                在xLua中，LuaIndexes.LUA_REGISTRYINDEX是一个常量，它表示Lua中的注册表（Registry）的索引。
+                注册表是一个全局的table，它只能被C代码访问。通常，可以用它来保存那种需要在几个模块中共享的数据。
+
+                在xLua的源码中，LuaIndexes.LUA_REGISTRYINDEX被用来访问注册表，并在其中存储一些重要的数据。
+                例如，在LuaEnv类的构造函数中，LuaIndexes.LUA_REGISTRYINDEX被用来将CS表存储到注册表中，以便在Lua代码中访问C#类型。
+
+                总之，LuaIndexes.LUA_REGISTRYINDEX在xLua中用于访问Lua的注册表，并在其中存储和共享数据。
+                */
                 LuaIndexes.LUA_REGISTRYINDEX = LuaAPI.xlua_get_registry_index();
 #if GEN_CODE_MINIMIZE
                 LuaAPI.xlua_set_csharp_wrapper_caller(InternalGlobals.CSharpWrapperCallerPtr);
@@ -357,7 +369,7 @@ namespace XLua
 #endif
         }
 
-        //����API
+        //����API
         public void GC()
         {
             Tick();
@@ -598,8 +610,8 @@ namespace XLua
 
         internal List<CustomLoader> customLoaders = new List<CustomLoader>();
 
-        //loader : CustomLoader�� filepath��������ref���ͣ�������require�Ĳ����������Ҫ֧�ֵ��ԣ���Ҫ�����ʵ·����
-        //                        ����ֵ���������null���������ظ�Դ���޺��ʵ��ļ������򷵻�UTF8�����byte[]
+        //loader : CustomLoader�� filepath��������ref���ͣ�������require�Ĳ����������Ҫ֧�ֵ��ԣ���Ҫ�����ʵ·����
+        //                        ����ֵ���������null���������ظ�Դ���޺��ʵ��ļ������򷵻�UTF8�����byte[]
         public void AddLoader(CustomLoader loader)
         {
             customLoaders.Add(loader);
