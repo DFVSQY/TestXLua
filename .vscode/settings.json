@@ -53,5 +53,6 @@
         "Temp/":true
     },
     "dotnet.defaultSolution": "TestXlua.sln",
-    "omnisharp.useModernNet": false
+    "omnisharp.useModernNet": false,
+    "git.branchProtection": []
 }
