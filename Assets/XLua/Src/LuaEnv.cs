@@ -87,13 +87,23 @@ namespace XLua
                 */
                 LuaIndexes.LUA_REGISTRYINDEX = LuaAPI.xlua_get_registry_index();
 #if GEN_CODE_MINIMIZE
+                /*
+                设置C#包装器调用者，即C#代码中的函数指针，该函数指针指向一个用于调用C#函数的函数。
+                这样，当Lua代码需要调用C#函数时，就可以通过这个函数指针来实现。
+                */
                 LuaAPI.xlua_set_csharp_wrapper_caller(InternalGlobals.CSharpWrapperCallerPtr);
 #endif
                 // Create State
                 rawL = LuaAPI.luaL_newstate();
 
                 //Init Base Libs
+
+                /* 
+                用于初始化xLua库。这个接口会注册xLua库中的所有函数和变量，以便它们可以在Lua代码中使用。 
+                */
                 LuaAPI.luaopen_xlua(rawL);
+
+                /* 注册uint64库 */
                 LuaAPI.luaopen_i64lib(rawL);
 
                 translator = new ObjectTranslator(this, rawL);

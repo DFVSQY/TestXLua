@@ -216,6 +216,13 @@ namespace XLua
             }
         }
 
+        /*
+        ObjectTranslator负责在C#和Lua之间传递对象。
+        这个类提供了一系列的方法，用于将C#对象推送到Lua虚拟栈上，以及从Lua虚拟栈上获取C#对象。
+
+        ObjectTranslator还提供了一些用于管理对象缓存池的方法。
+        这些方法用于在C#和Lua之间传递对象时管理对象缓存池，以提高传递效率。
+        */
         public ObjectTranslator(LuaEnv luaenv,RealStatePtr L)
 		{
 #if XLUA_GENERAL  || (UNITY_WSA && !UNITY_EDITOR)
@@ -715,23 +722,48 @@ namespace XLua
             common_delegate_meta = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
         }
 		
+        /*
+        创建一个用于LuaCSFunction的table，并将其存储到lua注册表中，该table存在一些值：
+        t = {
+            __gc = metaFunctions.GcMeta,
+
+            [LuaAPI.xlua_tag()] = 1,
+
+            t[1] = type_id,
+        }
+        */
 		internal void createFunctionMetatable(RealStatePtr L)
 		{
-			LuaAPI.lua_newtable(L);
-			LuaAPI.xlua_pushasciistring(L,"__gc");
-			LuaAPI.lua_pushstdcallcfunction(L,metaFunctions.GcMeta);
-			LuaAPI.lua_rawset(L,-3);
-            LuaAPI.lua_pushlightuserdata(L, LuaAPI.xlua_tag());
-            LuaAPI.lua_pushnumber(L, 1);
-            LuaAPI.lua_rawset(L, -3);
+            /*
+            创建一个table：
+            {
+                __gc = metaFunctions.GcMeta
+            }
+            */
+			LuaAPI.lua_newtable(L);/* 在Lua虚拟栈上创建一个新的空表 */
+			LuaAPI.xlua_pushasciistring(L,"__gc");/* 将字符串 "__gc" 推送到 Lua 虚拟栈上 */
+			LuaAPI.lua_pushstdcallcfunction(L,metaFunctions.GcMeta);/* 将 metaFunctions.GcMeta 函数推送到 Lua 虚拟栈上 */
+			LuaAPI.lua_rawset(L,-3);/* 将栈顶的两个元素弹出，并将它们作为键值对添加到栈上第三个元素（即前面创建的空表）中。这相当于在表中添加了一个键为 "__gc"，值为 metaFunctions.GcMeta 的键值对 */
 
-            LuaAPI.lua_pushvalue(L, -1);
-            int type_id = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
-            LuaAPI.lua_pushnumber(L, type_id);
-            LuaAPI.xlua_rawseti(L, -2, 1);
-            LuaAPI.lua_pop(L, 1);
+            /*
+            对于table，增加一个元素：
+            t[LuaAPI.xlua_tag()] = 1;
+            */
+            LuaAPI.lua_pushlightuserdata(L, LuaAPI.xlua_tag());/* 将 xlua_tag() 的返回值推送到 Lua 虚拟栈上 */
+            LuaAPI.lua_pushnumber(L, 1);/* 将数字 1 推送到 Lua 虚拟栈上 */
+            LuaAPI.lua_rawset(L, -3);/* 将栈顶的两个元素弹出，并将它们作为键值对添加到栈上第三个元素（即前面创建的空表）中。这相当于在表中添加了一个键为 xlua_tag() 的返回值，值为数字 1 的键值对 */
 
-            typeIdMap.Add(typeof(LuaCSFunction), type_id);
+            /* 
+            对于table，增加一个数组元素：
+            t[1] = type_id
+            */
+            LuaAPI.lua_pushvalue(L, -1);/* 将栈顶元素复制一份并推送到栈顶，即table引用复制一份，复制后的table和原来的table是同一个引用 */
+            int type_id = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);/* 将栈顶元素弹出，并将其存储在全局注册表中。然后返回一个整数，表示该元素在全局注册表中的索引 */
+            LuaAPI.lua_pushnumber(L, type_id);/* 将前面获取的索引推送到 Lua 虚拟栈上 */
+            LuaAPI.xlua_rawseti(L, -2, 1);/* 将栈顶元素弹出，并将其设置为栈上第二个元素（即前面创建的空表）的第一个数组元素。这相当于在表中添加了一个键为数字 1，值为前面获取的索引的键值对 */
+            LuaAPI.lua_pop(L, 1);/* 将栈顶元素弹出 */
+
+            typeIdMap.Add(typeof(LuaCSFunction), type_id);/* 将前面获取的索引存储在一个字典中，以便后续使用。 */
         }
 		
 		internal Type FindType(string className, bool isQualifiedName = false)

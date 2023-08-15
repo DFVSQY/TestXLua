@@ -15,6 +15,13 @@ namespace XLua.LuaDLL
     using XLua;
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
+    /*
+    UnmanagedFunctionPointer是一个特性，它用于控制委托到非托管函数指针的转换。
+
+    在xLua项目中，部分函数带有UnmanagedFunctionPointer特性，这是因为xLua需要在C#和Lua之间进行互操作。
+    在这种情况下，需要使用非托管函数指针来调用C#函数。
+    UnmanagedFunctionPointer特性用于控制这些调用的细节，以确保C#和Lua之间的互操作能够正确进行。
+    */
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int lua_CSFunction(IntPtr L);
 
