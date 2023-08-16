@@ -232,6 +232,10 @@ namespace XLua
                 dumb_field.GetValue(null);
             }
 #endif
+
+            /*
+            记录一些必要的程序集
+            */
             assemblies = new List<Assembly>();
 
 #if (UNITY_WSA && !ENABLE_IL2CPP) && !UNITY_EDITOR
@@ -252,21 +256,40 @@ namespace XLua
             }
 
             this.luaEnv=luaenv;
-            objectCasters = new ObjectCasters(this);
-            objectCheckers = new ObjectCheckers(this);
-            methodWrapsCache = new MethodWrapsCache(this, objectCheckers, objectCasters);
-			metaFunctions=new StaticLuaCallbacks();
 
+            /* 类型转换器 */
+            objectCasters = new ObjectCasters(this);
+
+            /* 类型检查器 */
+            objectCheckers = new ObjectCheckers(this);
+
+            /* 方法缓存记录 */
+            methodWrapsCache = new MethodWrapsCache(this, objectCheckers, objectCasters);
+
+            /*  */
+			metaFunctions= new StaticLuaCallbacks();
+
+            /* 创建对应的委托 */
             importTypeFunction = new LuaCSFunction(StaticLuaCallbacks.ImportType);
             loadAssemblyFunction = new LuaCSFunction(StaticLuaCallbacks.LoadAssembly);
             castFunction = new LuaCSFunction(StaticLuaCallbacks.Cast);
 
+            /*
+            创建一个table t，并为其设置metatable m：
+            {
+                __mode = "v",
+            }
+            */
             LuaAPI.lua_newtable(L);
             LuaAPI.lua_newtable(L);
             LuaAPI.xlua_pushasciistring(L, "__mode");
             LuaAPI.xlua_pushasciistring(L, "v");
             LuaAPI.lua_rawset(L, -3);
             LuaAPI.lua_setmetatable(L, -2);
+
+            /*
+            将table t从栈顶弹出，并存放到registry中
+            */
             cacheRef = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
 
             initCSharpCallLua();
@@ -301,6 +324,10 @@ namespace XLua
         }
 #endif
 
+        /*
+        用于初始化C#调用Lua的相关设置。这个方法会遍历所有标记为[CSharpCallLua]的类型，并为它们生成相应的委托类型和转换函数。
+        这些委托类型和转换函数用于在C#代码中调用Lua函数时，将Lua函数转换为C#委托并进行调用。
+        */
         void initCSharpCallLua()
         {
 #if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
