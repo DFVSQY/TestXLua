@@ -90,6 +90,23 @@ public class Test : MonoBehaviour
         {
             Debug.LogFormat("list title:{0}", title);
         }
+
+        /*
+        用LuaTable承接lua中的table。
+
+        优势：
+            不需要生成代码
+        
+        劣势：
+            比interface方式要慢一个数量级，没有类型检查。
+        */
+        LuaTable luaTable = env.Global.Get<LuaTable>("csharp_table");
+        luaTable.ForEach<string, string>((key, value) =>
+        {
+            Debug.LogFormat("LuaTable key:{0}, value:{1}", key, value);
+        });
+        Debug.LogFormat("LuaTable Get int 1:{0}", luaTable.Get<int, string>(1));
+        Debug.LogFormat("LuaTable Get int 2:{0}", luaTable.Get<int, string>(2));
     }
 
     private byte[] Loader(ref string filePath)

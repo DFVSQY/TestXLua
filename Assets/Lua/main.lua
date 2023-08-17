@@ -17,3 +17,7 @@ _G.dict_title = {
 }
 
 _G.list_title = {"file", "edit", "selection", "view"}
+
+_G.csharp_table = {
+    "file", edit = "Edit", "selection", view = "View"
+}
