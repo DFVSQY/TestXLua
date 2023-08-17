@@ -8,3 +8,12 @@ _G.person_one = {
     name = "Gates",
     age = 15,
 }
+
+_G.dict_title = {
+    file = "File",
+    edit = "Edit",
+    selection = "Selection",
+    view = "View",  
+}
+
+_G.list_title = {"file", "edit", "selection", "view"}

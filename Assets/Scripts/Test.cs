@@ -60,18 +60,36 @@ public class Test : MonoBehaviour
         env.AddLoader(Loader);
         env.DoString("require 'main'");
 
+        // 访问Lua中的基本类型
         int num1 = env.Global.Get<int>("g_int_num");
         double num2 = env.Global.Get<double>("g_float_num");
         Debug.LogFormat("num1:{0}, num2:{1}", num1, num2);
 
+        // 用class承接lua中的table
         PersonCls personCls = env.Global.Get<PersonCls>("person_one");
         Debug.LogFormat("person cls, name:{0}, age:{1}", personCls.name, personCls.age);
 
+        // 用struct承接lua中的table
         PersonSt personSt = env.Global.Get<PersonSt>("person_one");
         Debug.LogFormat("person st, name:{0} age:{1}", personSt.name, personSt.age);
 
+        // 用interface承接lua中的table
         PersonInf personInf = env.Global.Get<PersonInf>("person_one");
         Debug.LogFormat("person inf, name:{0} age:{1}", personInf.name, personInf.age);
+
+        // 用Dictionary<T1,T2>承接lua中的table
+        Dictionary<string, string> dict_title = env.Global.Get<Dictionary<string, string>>("dict_title");
+        foreach (var pair in dict_title)
+        {
+            Debug.LogFormat("dict key:{0}, value:{1}", pair.Key, pair.Value);
+        }
+
+        // 用List<T>承接lua中的table
+        List<string> list_title = env.Global.Get<List<string>>("list_title");
+        foreach (string title in list_title)
+        {
+            Debug.LogFormat("list title:{0}", title);
+        }
     }
 
     private byte[] Loader(ref string filePath)
