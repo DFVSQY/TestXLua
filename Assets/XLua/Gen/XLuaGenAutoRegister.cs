@@ -27,6 +27,8 @@ namespace XLua.CSObjectWrap
         {
             
             
+            translator.AddInterfaceBridgeCreator(typeof(Test.PersonInf), TestPersonInfBridge.__Create);
+            
         }
         
 	    static XLua_Gen_Initer_Register__()

@@ -37,6 +37,22 @@ public class Test : MonoBehaviour
         public int age;
     }
 
+    /*
+    用Interface承接lua中的table。
+
+    引用方式的映射，意味着修改interface的字段值会同步到table。
+    这种方式依赖于生成代码（如果没生成代码会抛InvalidCastException异常），代码生成器会生成这个interface的实例。
+    如果get一个属性，生成代码会get对应的table字段，如果set属性也会设置对应的字段。甚至可以通过interface的方法访问lua的函数。
+
+    另外这个interface必须是public的，否则不能正确生成代码。
+    */
+    [CSharpCallLua]
+    public interface PersonInf
+    {
+        public string name { get; set; }
+        public int age { get; set; }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -53,6 +69,9 @@ public class Test : MonoBehaviour
 
         PersonSt personSt = env.Global.Get<PersonSt>("person_one");
         Debug.LogFormat("person st, name:{0} age:{1}", personSt.name, personSt.age);
+
+        PersonInf personInf = env.Global.Get<PersonInf>("person_one");
+        Debug.LogFormat("person inf, name:{0} age:{1}", personInf.name, personInf.age);
     }
 
     private byte[] Loader(ref string filePath)
