@@ -15,6 +15,10 @@ public class Test : MonoBehaviour
         using LuaEnv env = new();
         env.AddLoader(Loader);
         env.DoString("require 'main'");
+
+        int num1 = env.Global.Get<int>("g_int_num");
+        double num2 = env.Global.Get<double>("g_float_num");
+        Debug.LogFormat("num1:{0}, num2:{1}", num1, num2);
     }
 
     private byte[] Loader(ref string filePath)
