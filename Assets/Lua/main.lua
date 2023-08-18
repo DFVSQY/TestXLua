@@ -21,3 +21,14 @@ _G.list_title = {"file", "edit", "selection", "view"}
 _G.csharp_table = {
     "file", edit = "Edit", "selection", view = "View"
 }
+
+_G.test_action1 = function(a, b)
+    return a * b
+end
+
+_G.test_func1 = function(a, b)
+    local sum = a + b;
+    local sub = a - b;
+    
+    return sum, sub, {sum = sum, sub = sub}, sum + sub
+end

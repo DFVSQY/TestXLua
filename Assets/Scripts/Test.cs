@@ -53,6 +53,24 @@ public class Test : MonoBehaviour
         public int age { get; set; }
     }
 
+    /*
+    用delegate承接lua中的function。
+
+    优点：
+        性能好很多，而且类型安全。
+        
+    缺点：
+        要生成代码（如果没生成代码会抛InvalidCastException异常）。
+
+    声明方式：
+        对于function的每个参数就声明一个输入类型的参数。 
+        对于多返回值，从左往右映射到c#的输出参数，输出参数包括返回值，out参数，ref参数。
+
+    另外这个function必须是public的，否则不能正确生成代码。
+    */
+    [CSharpCallLua]
+    public delegate int TestFunc1(int a, int b, out int sub, out LuaTable table, ref int total);
+
     // Start is called before the first frame update
     void Start()
     {
@@ -107,6 +125,22 @@ public class Test : MonoBehaviour
         });
         Debug.LogFormat("LuaTable Get int 1:{0}", luaTable.Get<int, string>(1));
         Debug.LogFormat("LuaTable Get int 2:{0}", luaTable.Get<int, string>(2));
+
+        TestCallLuaFuncByDelegate(env);
+    }
+
+    /*
+    由于CLR的gc策略相关，需要将调用lua函数的功能单独放到一个函数中，
+    否则会报错：try to dispose a LuaEnv with C# callback
+    参考：https://github.com/Tencent/xLua/issues/630
+    */
+    private void TestCallLuaFuncByDelegate(LuaEnv env)
+    {
+        TestFunc1 func1 = env.Global.Get<TestFunc1>("test_func1");
+        int total = 0;
+        int sum = func1(20, 10, out int sub, out LuaTable table, ref total);
+        Debug.LogFormat("func1 call, sum:{0} sub:{1} table.sum:{2}, table.sub:{3}, total:{4}",
+                        sum, sub, table.Get<string, int>("sum"), table.Get<string, int>("sub"), total);
     }
 
     private byte[] Loader(ref string filePath)
