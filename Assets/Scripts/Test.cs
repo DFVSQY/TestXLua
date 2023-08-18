@@ -126,6 +126,7 @@ public class Test : MonoBehaviour
         Debug.LogFormat("LuaTable Get int 1:{0}", luaTable.Get<int, string>(1));
         Debug.LogFormat("LuaTable Get int 2:{0}", luaTable.Get<int, string>(2));
 
+        // 用delegate承接lua中的function
         TestCallLuaFuncByDelegate(env);
     }
 
