@@ -128,6 +128,28 @@ public class Test : MonoBehaviour
 
         // 用delegate承接lua中的function
         TestCallLuaFuncByDelegate(env);
+
+        /*
+        用LuaFunction承接lua中的function
+
+        优点：
+            不用生成代码
+        
+        缺点：
+            性能差些
+        */
+        LuaFunction luaFunction = env.Global.Get<LuaFunction>("test_func1");
+        object[] objs = luaFunction.Call(2, 1);
+
+        // long sum = (long)objs[0], sub = (long)objs[1], total = (long)objs[2];    /* xlua原因导致不能这样写成一行，原因未知 */
+        long sum = (long)objs[0];
+        long sub = (long)objs[1];
+        long total = (long)objs[3];
+        LuaTable t = objs[2] as LuaTable;
+        long t_sum = t.Get<string, long>("sum");
+        long t_sub = t.Get<string, long>("sub");
+        Debug.LogFormat("luaFunction call, sum:{0}, sub:{1}, table.sum:{2}, table.sub:{3}, total:{4}",
+                        sum, sub, t_sum, t_sub, total);
     }
 
     /*
