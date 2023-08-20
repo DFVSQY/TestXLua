@@ -266,7 +266,7 @@ namespace XLua
             /* 方法缓存记录 */
             methodWrapsCache = new MethodWrapsCache(this, objectCheckers, objectCasters);
 
-            /*  */
+            /* 一些用于lua回调的静态函数 */
 			metaFunctions= new StaticLuaCallbacks();
 
             /* 创建对应的委托 */

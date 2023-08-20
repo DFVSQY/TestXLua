@@ -222,6 +222,9 @@ namespace XLua.LuaDLL
 #if XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
             GCHandle.Alloc(function);
 #endif
+            /*
+            Marshal.GetFunctionPointerForDelegate方法用于将托管委托转换为可从非托管代码调用的函数指针。
+            */
             IntPtr fn = Marshal.GetFunctionPointerForDelegate(function);
             xlua_push_csharp_function(L, fn, n);
         }
