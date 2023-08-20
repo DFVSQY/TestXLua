@@ -29,3 +29,19 @@ print("go_3.name:", go_3.name)
 -- 调用成员函数
 local go_4 = GameObject()
 go_4:SetActive(false)
+
+---------------------------------- 调用一些自定义的c#类型 ----------------------------------
+local Person = CS.Person
+local person = Person()
+
+person.age = 10
+local person_age = person.age
+print("person age:", person_age)
+
+person:SetName("Wang")
+local person_name = person:GetName()
+print("person name:", person_name)
+
+person.data:SetScore(20)
+local person_score = person.data:GetScore(20)
+print("person data score:", person_score)
