@@ -144,6 +144,9 @@ public class Test : MonoBehaviour
         LuaTable t = objs[2] as LuaTable;
         Debug.LogFormat("luaFunction call, sum:{0}, sub:{1}, table.sum:{2}, table.sub:{3}, total:{4}",
                         sum, sub, t.Get<string, long>("sum"), t.Get<string, long>("sub"), total);
+
+        // Lua调用C#示例
+        env.DoString("require 'csharp'");
     }
 
     /*
