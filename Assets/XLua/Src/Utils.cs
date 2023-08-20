@@ -117,9 +117,9 @@ namespace XLua
 					if (!(assemblies[i].ManifestModule is System.Reflection.Emit.ModuleBuilder))
 					{
 #endif
-						allTypes.AddRange(assemblies[i].GetTypes()
-						.Where(type => exclude_generic_definition ? !type.IsGenericTypeDefinition() : true)
-						);
+					allTypes.AddRange(assemblies[i].GetTypes()
+					.Where(type => exclude_generic_definition ? !type.IsGenericTypeDefinition() : true)
+					);
 #if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
 					}
 #endif
@@ -407,9 +407,9 @@ namespace XLua
 			FieldInfo[] fields = type.GetFields(flag);
 			EventInfo[] all_events = type.GetEvents(flag | BindingFlags.Public | BindingFlags.NonPublic);
 
-            LuaAPI.lua_checkstack(L, 2);
+			LuaAPI.lua_checkstack(L, 2);
 
-            for (int i = 0; i < fields.Length; ++i)
+			for (int i = 0; i < fields.Length; ++i)
 			{
 				FieldInfo field = fields[i];
 				string fieldName = field.Name;
@@ -605,21 +605,21 @@ namespace XLua
 			}
 		}
 
-        public static void RegisterEnumType(RealStatePtr L, Type type)
-        {
-            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-            foreach (var name in Enum.GetNames(type))
-            {
-                RegisterObject(L, translator, Utils.CLS_IDX, name, Enum.Parse(type, name));
-            }
-        }
-
-
-        public static void MakePrivateAccessible(RealStatePtr L, Type type)
+		public static void RegisterEnumType(RealStatePtr L, Type type)
 		{
-            LuaAPI.lua_checkstack(L, 20);
+			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			foreach (var name in Enum.GetNames(type))
+			{
+				RegisterObject(L, translator, Utils.CLS_IDX, name, Enum.Parse(type, name));
+			}
+		}
 
-            int oldTop = LuaAPI.lua_gettop(L);
+
+		public static void MakePrivateAccessible(RealStatePtr L, Type type)
+		{
+			LuaAPI.lua_checkstack(L, 20);
+
+			int oldTop = LuaAPI.lua_gettop(L);
 
 			LuaAPI.luaL_getmetatable(L, type.FullName);
 			if (LuaAPI.lua_isnil(L, -1))
@@ -822,9 +822,9 @@ namespace XLua
 
 		public static void ReflectionWrap(RealStatePtr L, Type type, bool privateAccessible)
 		{
-            LuaAPI.lua_checkstack(L, 20);
+			LuaAPI.lua_checkstack(L, 20);
 
-            int top_enter = LuaAPI.lua_gettop(L);
+			int top_enter = LuaAPI.lua_gettop(L);
 			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
 			//create obj meta table
 			LuaAPI.luaL_getmetatable(L, type.FullName);
@@ -849,15 +849,15 @@ namespace XLua
 			int obj_setter = LuaAPI.lua_gettop(L);
 			LuaAPI.lua_newtable(L);
 			int cls_field = LuaAPI.lua_gettop(L);
-            //set cls_field to namespace
-            SetCSTable(L, type, cls_field);
-            //finish set cls_field to namespace
-            LuaAPI.lua_newtable(L);
+			//set cls_field to namespace
+			SetCSTable(L, type, cls_field);
+			//finish set cls_field to namespace
+			LuaAPI.lua_newtable(L);
 			int cls_getter = LuaAPI.lua_gettop(L);
 			LuaAPI.lua_newtable(L);
 			int cls_setter = LuaAPI.lua_gettop(L);
 
-            LuaCSFunction item_getter;
+			LuaCSFunction item_getter;
 			LuaCSFunction item_setter;
 			makeReflectionWrap(L, type, cls_field, cls_getter, cls_setter, obj_field, obj_getter, obj_setter, obj_meta,
 				out item_getter, out item_setter, privateAccessible ? (BindingFlags.Public | BindingFlags.NonPublic) : BindingFlags.Public);
@@ -975,24 +975,52 @@ namespace XLua
 		public static void BeginObjectRegister(Type type, RealStatePtr L, ObjectTranslator translator, int meta_count, int method_count, int getter_count,
 			int setter_count, int type_id = -1)
 		{
+			/*
+			将对应类型的metatable入栈，type和type_id总要有一个有效的用来指明需要的类型，
+			如果type存在有效值，优先使用type指定的值。
+			*/
 			if (type == null)
 			{
 				if (type_id == -1) throw new Exception("Fatal: must provide a type of type_id");
+
+				/*
+				将Registry中的type_id对应的元素入栈
+				*/
 				LuaAPI.xlua_rawgeti(L, LuaIndexes.LUA_REGISTRYINDEX, type_id);
 			}
 			else
 			{
+				/*
+				从Registry中获取type.FullName对应的table作为metatable并压入栈。
+				如果没有对应的metatable则压入nil
+				*/
 				LuaAPI.luaL_getmetatable(L, type.FullName);
+
+				/*
+				检测压入的栈顶元素是否为nil，即检测Registry中是否有type对应的metatable。
+				*/
 				if (LuaAPI.lua_isnil(L, -1))
 				{
-					LuaAPI.lua_pop(L, 1);
+					LuaAPI.lua_pop(L, 1);                           /* 将压入栈顶的一个元素移出，即移出压入的nil */
+
+					/*
+					创建一个metatable并放入Registry中，对应的key为type.FullName，
+					并将创建的metatable压入栈中。
+					*/
 					LuaAPI.luaL_newmetatable(L, type.FullName);
 				}
 			}
-			LuaAPI.lua_pushlightuserdata(L, LuaAPI.xlua_tag());
-			LuaAPI.lua_pushnumber(L, 1);
-			LuaAPI.lua_rawset(L, -3);
 
+			/*
+			对于mettable，打上一个xlua_tag标签: metatable[xlua_tag] = 1
+			*/
+			LuaAPI.lua_pushlightuserdata(L, LuaAPI.xlua_tag()); /* 将lightuserdata（值为xlua_tag）入栈 */
+			LuaAPI.lua_pushnumber(L, 1);    /* 将数字1入栈 */
+			LuaAPI.lua_rawset(L, -3);       /* 对于压入的metatable[xlua_tag] = 1，并从栈中弹出key和value值 */
+
+			/*
+			对于符合条件的类型，为metatable打上__gc方法: metatable["__gc"] = GcMeta
+			*/
 			if ((type == null || !translator.HasCustomOp(type)) && type != typeof(decimal))
 			{
 				LuaAPI.xlua_pushasciistring(L, "__gc");
@@ -1000,6 +1028,9 @@ namespace XLua
 				LuaAPI.lua_rawset(L, -3);
 			}
 
+			/*
+			对于mettable，打上__tostring方法，metatable["__tostring"] = ToStringMeta
+			*/
 			LuaAPI.xlua_pushasciistring(L, "__tostring");
 			LuaAPI.lua_pushstdcallcfunction(L, translator.metaFunctions.ToStringMeta);
 			LuaAPI.lua_rawset(L, -3);
@@ -1330,10 +1361,10 @@ namespace XLua
 		public static void LoadCSTable(RealStatePtr L, Type type)
 		{
 			int oldTop = LuaAPI.lua_gettop(L);
-            LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
-            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+			LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
+			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
 
-            List<string> path = getPathOfType(type);
+			List<string> path = getPathOfType(type);
 
 			for (int i = 0; i < path.Count; ++i)
 			{
@@ -1358,10 +1389,10 @@ namespace XLua
 		{
 			int oldTop = LuaAPI.lua_gettop(L);
 			cls_table = abs_idx(oldTop, cls_table);
-            LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
-            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+			LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
+			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
 
-            List<string> path = getPathOfType(type);
+			List<string> path = getPathOfType(type);
 
 			for (int i = 0; i < path.Count - 1; ++i)
 			{
@@ -1393,9 +1424,9 @@ namespace XLua
 			LuaAPI.lua_rawset(L, -3);
 			LuaAPI.lua_pop(L, 1);
 
-            LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
-            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
-            ObjectTranslatorPool.Instance.Find(L).PushAny(L, type);
+			LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
+			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+			ObjectTranslatorPool.Instance.Find(L).PushAny(L, type);
 			LuaAPI.lua_pushvalue(L, cls_table);
 			LuaAPI.lua_rawset(L, -3);
 			LuaAPI.lua_pop(L, 1);
@@ -1434,8 +1465,8 @@ namespace XLua
 				}
 			}
 
-            var lastPos = delegateParams.Length - 1;
-            return lastPos < 0 || delegateParams[lastPos].IsDefined(typeof(ParamArrayAttribute), false) == bridgeParams[lastPos].IsDefined(typeof(ParamArrayAttribute), false);
+			var lastPos = delegateParams.Length - 1;
+			return lastPos < 0 || delegateParams[lastPos].IsDefined(typeof(ParamArrayAttribute), false) == bridgeParams[lastPos].IsDefined(typeof(ParamArrayAttribute), false);
 		}
 
 		public static bool IsSupportedMethod(MethodInfo method)
