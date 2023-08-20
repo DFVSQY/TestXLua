@@ -620,8 +620,6 @@ namespace XLua
 
         internal List<CustomLoader> customLoaders = new List<CustomLoader>();
 
-        //loader : CustomLoader�� filepath��������ref���ͣ�������require�Ĳ����������Ҫ֧�ֵ��ԣ���Ҫ�����ʵ·����
-        //                        ����ֵ���������null���������ظ�Դ���޺��ʵ��ļ������򷵻�UTF8�����byte[]
         public void AddLoader(CustomLoader loader)
         {
             customLoaders.Add(loader);
