@@ -620,6 +620,12 @@ namespace XLua
 
         internal List<CustomLoader> customLoaders = new List<CustomLoader>();
 
+        /*
+        loader：一个包括了加载函数的委托，其类型为delegate byte[] CustomLoader(ref string filepath)，
+        当一个文件被require时，这个loader会被回调，其参数是调用require所使用的参数，
+        如果该loader找到文件，可以将其读进内存，返回一个byte数组。
+        如果需要支持调试的话，而filepath要设置成IDE能找到的路径（相对或者绝对都可以）
+        */
         public void AddLoader(CustomLoader loader)
         {
             customLoaders.Add(loader);
