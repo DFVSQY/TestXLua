@@ -335,16 +335,23 @@ LUA_API int xlua_setglobal (lua_State *L, const char *name) {
 	return lua_pcall(L, 2, 0, 0);
 }
 
+/* 尝试获取Registry[cache_ref][key]中的userdata，并压入stack */
 LUA_API int xlua_tryget_cachedud(lua_State *L, int key, int cache_ref) {
+	/* 将Registry[cache_ref]入栈 */
 	lua_rawgeti(L, LUA_REGISTRYINDEX, cache_ref);
+
+	/* 将 Registry[cache_ref][key] 入栈 */
 	lua_rawgeti(L, -1, key);
+
+	/* 如果 Registry[cache_ref][key] 不为nil */
 	if (!lua_isnil(L, -1))
 	{
+		/* 移出栈中的Registry[cache_ref]，则栈中只保留Registry[cache_ref][key] */
 		lua_remove(L, -2);
-		return 1;
+		return 1;			/* 指明栈中只压入了一个元素 */
 	}
-	lua_pop(L, 2);
-	return 0;
+	lua_pop(L, 2);	/* 弹出压入的两个元素 */
+	return 0;	/* 栈中未保留任何元素 */
 }
 
 static void cacheud(lua_State *L, int key, int cache_ref) {

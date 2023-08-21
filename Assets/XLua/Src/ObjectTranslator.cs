@@ -1324,7 +1324,7 @@ namespace XLua
             bool needcache = !is_valuetype || is_enum;
             if (needcache && (is_enum ? enumMap.TryGetValue(o, out index) : reverseMap.TryGetValue(o, out index)))
             {
-                if (LuaAPI.xlua_tryget_cachedud(L, index, cacheRef) == 1)
+                if (LuaAPI.xlua_tryget_cachedud(L, index, cacheRef) == 1)   /* 尝试获取Registry[cacheRef][index]中缓存的对象，成功则返回1 */
                 {
                     return;
                 }
