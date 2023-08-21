@@ -1071,9 +1071,18 @@ namespace XLua
 			return idx > 0 ? idx : top + idx + 1;
 		}
 
+		/*
+		对象元表在栈中索引位置，参见 BeginObjectRegister 方法
+		*/
 		public const int OBJ_META_IDX = -4;
+
+		/* 存储方法的table在栈中的位置，参见 BeginObjectRegister 方法 */
 		public const int METHOD_IDX = -3;
+
+		/* 存储getter的table在栈中的位置，参见 BeginObjectRegister 方法 */
 		public const int GETTER_IDX = -2;
+
+		/* 存储 setter 的table在栈中的位置，参见 BeginObjectRegister 方法 */
 		public const int SETTER_IDX = -1;
 
 #if GEN_CODE_MINIMIZE
@@ -1091,37 +1100,37 @@ namespace XLua
 			int setter_idx = abs_idx(top, SETTER_IDX);
 
 			//begin index gen
-			LuaAPI.xlua_pushasciistring(L, "__index");
-			LuaAPI.lua_pushvalue(L, method_idx);
-			LuaAPI.lua_pushvalue(L, getter_idx);
+			LuaAPI.xlua_pushasciistring(L, "__index");	/* 将 '__index' 字符串入栈 */
+			LuaAPI.lua_pushvalue(L, method_idx);	/* 将存放method的table复制一份放入栈顶 */
+			LuaAPI.lua_pushvalue(L, getter_idx);	/* 将存放getter的table复制一份放入栈顶 */
 
 			if (csIndexer == null)
 			{
-				LuaAPI.lua_pushnil(L);
+				LuaAPI.lua_pushnil(L);				/* 将nil压入栈中 */
 			}
 			else
 			{
 #if GEN_CODE_MINIMIZE
                 translator.PushCSharpWrapper(L, csIndexer);
 #else
-				LuaAPI.lua_pushstdcallcfunction(L, csIndexer);
+				LuaAPI.lua_pushstdcallcfunction(L, csIndexer);	/* 将C#函数入栈 */
 #endif
 			}
 
-			translator.Push(L, type == null ? base_type : type.BaseType());
+			translator.Push(L, type == null ? base_type : type.BaseType());	/* 将基类入栈 */
 
-			LuaAPI.xlua_pushasciistring(L, LuaIndexsFieldName);
-			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+			LuaAPI.xlua_pushasciistring(L, LuaIndexsFieldName); /* 将字符串 ‘LuaIndexs’ 入栈 */
+			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX); /* 将注册表中 ‘LuaIndexs’ 对应的元素， 即 Registry['LuaIndexs'] 入栈，并将栈顶的key弹出 */
 			if (arrayIndexer == null)
 			{
-				LuaAPI.lua_pushnil(L);
+				LuaAPI.lua_pushnil(L); /* 将nil入栈 */
 			}
 			else
 			{
 #if GEN_CODE_MINIMIZE
                 translator.PushCSharpWrapper(L, arrayIndexer);
 #else
-				LuaAPI.lua_pushstdcallcfunction(L, arrayIndexer);
+				LuaAPI.lua_pushstdcallcfunction(L, arrayIndexer); /* 将C#函数入栈 */
 #endif
 			}
 
@@ -1205,8 +1214,14 @@ namespace XLua
 		public static void RegisterFunc(RealStatePtr L, int idx, string name, LuaCSFunction func)
 		{
 			idx = abs_idx(LuaAPI.lua_gettop(L), idx);
+
+			/* 将作为key的名称入栈 */
 			LuaAPI.xlua_pushasciistring(L, name);
+
+			/* 将作为value的函数入栈 */
 			LuaAPI.lua_pushstdcallcfunction(L, func);
+
+			/* t[key] = value, 其中t放在栈的idx位置处 */
 			LuaAPI.lua_rawset(L, idx);
 		}
 #endif
