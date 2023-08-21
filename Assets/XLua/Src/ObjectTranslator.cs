@@ -1320,6 +1320,7 @@ namespace XLua
             bool is_enum = type.GetTypeInfo().IsEnum;
             bool is_valuetype = type.GetTypeInfo().IsValueType;
 #endif
+            /* 引用类型或者枚举需要缓存 */
             bool needcache = !is_valuetype || is_enum;
             if (needcache && (is_enum ? enumMap.TryGetValue(o, out index) : reverseMap.TryGetValue(o, out index)))
             {
