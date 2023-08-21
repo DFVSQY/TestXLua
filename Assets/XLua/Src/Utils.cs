@@ -1134,6 +1134,17 @@ namespace XLua
 #endif
 			}
 
+			/*
+			LUA_API int gen_obj_indexer(lua_State *L) {
+				lua_pushnil(L);
+				lua_pushcclosure(L, obj_indexer, 7);
+				return 0;
+			}
+
+			将上述压入栈的6个元素以及新压入的nil，作为函数obj_indexer的闭包，然后弹出栈中的七个元素。
+
+			这一步相当于为函数obj_indexer指定upvalue值。
+			*/
 			LuaAPI.gen_obj_indexer(L);
 
 			if (type != null)
