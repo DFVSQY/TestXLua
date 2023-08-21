@@ -1037,11 +1037,14 @@ namespace XLua
 
 			if (method_count == 0)
 			{
-				LuaAPI.lua_pushnil(L);
+				LuaAPI.lua_pushnil(L);	/* 将一个nil入栈 */
 			}
 			else
 			{
-				LuaAPI.lua_createtable(L, 0, method_count);
+				/*
+				创建一个空table，并预分配0个数组元素大小和method_count非数组元素大小
+				*/
+				LuaAPI.lua_createtable(L, 0, method_count);		/* 用table记录方法 */
 			}
 
 			if (getter_count == 0)
@@ -1050,7 +1053,7 @@ namespace XLua
 			}
 			else
 			{
-				LuaAPI.lua_createtable(L, 0, getter_count);
+				LuaAPI.lua_createtable(L, 0, getter_count);		/* 用table记录getter */
 			}
 
 			if (setter_count == 0)
@@ -1059,7 +1062,7 @@ namespace XLua
 			}
 			else
 			{
-				LuaAPI.lua_createtable(L, 0, setter_count);
+				LuaAPI.lua_createtable(L, 0, setter_count);		/* 用table记录setter */
 			}
 		}
 
