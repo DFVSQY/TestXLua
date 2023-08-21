@@ -1149,15 +1149,15 @@ namespace XLua
 
 			if (type != null)
 			{
-				LuaAPI.xlua_pushasciistring(L, LuaIndexsFieldName);
-				LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);//store in lua indexs function tables
-				translator.Push(L, type);
-				LuaAPI.lua_pushvalue(L, -3);
-				LuaAPI.lua_rawset(L, -3);
-				LuaAPI.lua_pop(L, 1);
+				LuaAPI.xlua_pushasciistring(L, LuaIndexsFieldName);	/* 将LuaIndexs入栈 */
+				LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);//store in lua indexs function tables，将注册表中 ‘LuaIndexs’ 对应的元素， 即 Registry['LuaIndexs'] 入栈，并将栈顶的key弹出
+				translator.Push(L, type);	/* 将类型入栈 */
+				LuaAPI.lua_pushvalue(L, -3);	/* 将闭包复制一份放入栈顶 */
+				LuaAPI.lua_rawset(L, -3); /* Registry['LuaIndexs'][type] = closure ，并将栈顶的value和key弹出*/
+				LuaAPI.lua_pop(L, 1); /* 将Registry['LuaIndexs']出栈 */
 			}
 
-			LuaAPI.lua_rawset(L, meta_idx);
+			LuaAPI.lua_rawset(L, meta_idx);	/* 将闭包放入对象的元表中，即t['LuaIndexs'] = closure */
 			//end index gen
 
 			//begin newindex gen
