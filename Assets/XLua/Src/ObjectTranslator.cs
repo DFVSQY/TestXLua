@@ -46,45 +46,60 @@ namespace XLua
     }
 #pragma warning restore 414
 
+    /// <summary>
+    /// 可参考Lua的官方文档：https://www.lua.org/manual/5.4/manual.html#lua_type
+    /// </summary>
     public enum LuaTypes
     {
-        LUA_TNONE = -1,
-        LUA_TNIL = 0,
-        LUA_TNUMBER = 3,
-        LUA_TSTRING = 4,
-        LUA_TBOOLEAN = 1,
-        LUA_TTABLE = 5,
-        LUA_TFUNCTION = 6,
-        LUA_TUSERDATA = 7,
-        LUA_TTHREAD = 8,
-        LUA_TLIGHTUSERDATA = 2
+        LUA_TNONE = -1,             /* 无效索引值 */
+        LUA_TNIL = 0,               /* nil */
+        LUA_TNUMBER = 3,            /* 数字 */
+        LUA_TSTRING = 4,            /* 字符串 */
+        LUA_TBOOLEAN = 1,           /* bool值 */
+        LUA_TTABLE = 5,             /* table */
+        LUA_TFUNCTION = 6,          /* function */
+        LUA_TUSERDATA = 7,          /* userdata */
+        LUA_TTHREAD = 8,            /* thread */
+        LUA_TLIGHTUSERDATA = 2      /* lightuserdata */
     }
 
+    /// <summary>
+    /// 可参考Lua的官方文档：https://www.lua.org/manual/5.4/manual.html#lua_gc
+    /// </summary>
     public enum LuaGCOptions
     {
-        LUA_GCSTOP = 0,
-        LUA_GCRESTART = 1,
-        LUA_GCCOLLECT = 2,
-        LUA_GCCOUNT = 3,
-        LUA_GCCOUNTB = 4,
-        LUA_GCSTEP = 5,
-        LUA_GCSETPAUSE = 6,
-        LUA_GCSETSTEPMUL = 7,
+        LUA_GCSTOP = 0,         /* 停止垃圾收集器 */
+        LUA_GCRESTART = 1,      /* 重启垃圾收集器 */
+        LUA_GCCOLLECT = 2,      /* 执行一次完整的垃圾收集循环 */
+        LUA_GCCOUNT = 3,        /* 返回当前使用的内存量（以KB为单位） */
+        LUA_GCCOUNTB = 4,       /* 返回当前使用的内存量（以字节为单位）除以1024的余数。 */
+        LUA_GCSTEP = 5,         /* 执行一次增量垃圾收集步骤 */
+        LUA_GCSETPAUSE = 6,     /* 设置垃圾收集器间歇率 */
+        LUA_GCSETSTEPMUL = 7,   /* 设置垃圾收集器步进倍率 */
     }
 
+    /// <summary>
+    /// 可参考Lua的官方文档：https://www.lua.org/manual/5.4/manual.html#4.4.1
+    /// </summary>
     public enum LuaThreadStatus
     {
         LUA_RESUME_ERROR = -1,
-        LUA_OK = 0,
-        LUA_YIELD = 1,
-        LUA_ERRRUN = 2,
-        LUA_ERRSYNTAX = 3,
-        LUA_ERRMEM = 4,
-        LUA_ERRERR = 5,
+        LUA_OK = 0,                     /* 线程正常运行 */
+        LUA_YIELD = 1,                  /* 线程被挂起 */
+        LUA_ERRRUN = 2,                 /* 线程运行时发生错误 */
+        LUA_ERRSYNTAX = 3,              /* 线程在编译时发生语法错误 */
+        LUA_ERRMEM = 4,                 /* 线程运行时发生分配错误 */
+        LUA_ERRERR = 5,                 /* 线程在运行错误处理函数时发生错误 */
     }
 
+    /// <summary>
+    /// 记录Lua相关的一些索引
+    /// </summary>
     sealed class LuaIndexes
     {
+        /// <summary>
+        /// Lua注册表的位置，可参考Lua官方文档：https://www.lua.org/manual/5.4/manual.html#pdf-LUA_REGISTRYINDEX
+        /// </summary>
         public static int LUA_REGISTRYINDEX
         {
             get
@@ -1058,6 +1073,9 @@ namespace XLua
             }
         }
 
+        /// <summary>
+        /// 对每个类型记录一个类型id
+        /// </summary> 
         Dictionary<Type, int> typeIdMap = new Dictionary<Type, int>();
 
         //only store the type id to type map for struct
@@ -1094,6 +1112,10 @@ namespace XLua
                     if (common_array_meta == -1) throw new Exception("Fatal Exception! Array Metatable not inited!");
                     return common_array_meta;
                 }
+
+                /*
+                检测type类型的实例是否可以分配给 MulticastDelegate 类型的变量
+                */
                 if (typeof(MulticastDelegate).IsAssignableFrom(type))
                 {
                     if (common_delegate_meta == -1) throw new Exception("Fatal Exception! Delegate Metatable not inited!");
