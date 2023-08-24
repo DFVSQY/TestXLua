@@ -27,9 +27,16 @@ namespace XLua
 
     public delegate object ObjectCast(RealStatePtr L, int idx, object target); // if target is null, will new one
 
+    /// <summary>
+    /// 类型检测器，用于检测Lua的栈中指定位置元素的类型
+    /// </summary>
     public class ObjectCheckers
     {
+        /// <summary>
+        /// 记录每个类型对应的类型检测函数
+        /// </summary>
         Dictionary<Type, ObjectCheck> checkersMap = new Dictionary<Type, ObjectCheck>();
+
         ObjectTranslator translator;
 
         public ObjectCheckers(ObjectTranslator translator)
@@ -57,56 +64,89 @@ namespace XLua
             checkersMap[typeof(LuaFunction)] = luaFunctionCheck;
         }
 
+        /// <summary>
+        /// 检测是否为object类型
+        /// </summary>
         private static bool objectCheck(RealStatePtr L, int idx)
         {
             return true;
         }
 
+        /// <summary>
+        /// 是否为table类型
+        /// </summary>
         private bool luaTableCheck(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_isnil(L, idx) || LuaAPI.lua_istable(L, idx) || (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TUSERDATA && translator.SafeGetCSObj(L, idx) is LuaTable);
         }
 
+        /// <summary>
+        /// 是否为number类型
+        /// </summary>
         private bool numberCheck(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER;
         }
 
+        /// <summary>
+        /// 是否为decimal类型
+        /// </summary>
         private bool decimalCheck(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER || translator.IsDecimal(L, idx);
         }
 
+        /// <summary>
+        /// 是否为字符串类型
+        /// </summary>
         private bool strCheck(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TSTRING || LuaAPI.lua_isnil(L, idx);
         }
 
+        /// <summary>
+        /// 是否为字节序列
+        /// </summary>
         private bool bytesCheck(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TSTRING || LuaAPI.lua_isnil(L, idx) || (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TUSERDATA && translator.SafeGetCSObj(L, idx) is byte[]);
         }
 
+        /// <summary>
+        /// 是否为bool类型
+        /// </summary>
         private bool boolCheck(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TBOOLEAN;
         }
 
+        /// <summary>
+        /// 是否为64位有符号整数
+        /// </summary>
         private bool int64Check(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER || LuaAPI.lua_isint64(L, idx);
         }
 
+        /// <summary>
+        /// 是否为64位无符号整数
+        /// </summary>
         private bool uint64Check(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER || LuaAPI.lua_isuint64(L, idx);
         }
 
+        /// <summary>
+        /// 是否为lua函数
+        /// </summary>
         private bool luaFunctionCheck(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_isnil(L, idx) || LuaAPI.lua_isfunction(L, idx) || (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TUSERDATA && translator.SafeGetCSObj(L, idx) is LuaFunction);
         }
 
+        /// <summary>
+        /// 是否为lightuserdata
+        /// </summary>
         private bool intptrCheck(RealStatePtr L, int idx)
         {
             return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TLIGHTUSERDATA;

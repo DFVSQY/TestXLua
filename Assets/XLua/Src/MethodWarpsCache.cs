@@ -22,6 +22,12 @@ using System.Reflection;
 
 namespace XLua
 {
+    /// <summary>
+    /// OverloadMethodWrap类是腾讯开源的xlua项目中的一个类，它用于处理C#中重载方法的调用。
+    /// 由于Lua的类型不如C#丰富，存在一对多的情况，比如C#的int、float、double都对应于Lua的number。
+    /// 因此，当在Lua中调用C#的重载方法时，可能无法区分应该调用哪个重载版本。
+    /// 该类通过一定的规则来解决这个问题，以便在Lua中正确调用C#的重载方法1
+    /// </summary> 
     public class OverloadMethodWrap
     {
         ObjectTranslator translator;
@@ -62,11 +68,14 @@ namespace XLua
 
         public void Init(ObjectCheckers objCheckers, ObjectCasters objCasters)
         {
+            /*
+            如果目标类型为Delegate的派生类型，或者方法为非静态函数或构造函数
+            */
             if ((typeof(Delegate) != targetType && typeof(Delegate).IsAssignableFrom(targetType)) ||
                 !method.IsStatic || method.IsConstructor)
             {
-                luaStackPosStart = 2;
-                if (!method.IsConstructor)
+                luaStackPosStart = 2;               // 标记stack的起始位置为2
+                if (!method.IsConstructor)          // 非构造函数标记需要目标
                 {
                     targetNeeded = true;
                 }
@@ -75,7 +84,10 @@ namespace XLua
             var paramInfos = method.GetParameters();
             refPos = new int[paramInfos.Length];
 
+            // 记录输入类型（非out参数）的参数位置列表
             List<int> inPosList = new List<int>();
+
+            // 记录输出类型（out或者引用传递方式）的参数位置列表
             List<int> outPosList = new List<int>();
 
             List<ObjectCheck> paramsChecks = new List<ObjectCheck>();
@@ -88,14 +100,14 @@ namespace XLua
                 refPos[i] = -1;
                 if (!paramInfos[i].IsIn && paramInfos[i].IsOut)  // out parameter
 				{
-					outPosList.Add(i);
+					outPosList.Add(i);      // out参数放入out列表中
 				}
                 else
                 {
-                    if(paramInfos[i].ParameterType.IsByRef)
+                    if(paramInfos[i].ParameterType.IsByRef)     /* 参数是否引用传递 */
                     {
                         var ttype = paramInfos[i].ParameterType.GetElementType();
-                        if(CopyByValue.IsStruct(ttype) && ttype != typeof(decimal))
+                        if(CopyByValue.IsStruct(ttype) && ttype != typeof(decimal)) /* 如果是struct结构 */
                         {
                             refPos[i] = inPosList.Count;
                         }
