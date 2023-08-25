@@ -154,6 +154,7 @@ namespace XLua
 
         private ObjectCheck genChecker(Type type)
         {
+            /* Lua栈中指定位置存储的如果是C#对象，检测是否可以将其转换为指定类型 */
             ObjectCheck fixTypeCheck = (RealStatePtr L, int idx) =>
             {
                 if (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TUSERDATA)
@@ -172,6 +173,7 @@ namespace XLua
                 return false;
             };
 
+            /* 如果为可实例化的委托类型 */
             if (!type.IsAbstract() && typeof(Delegate).IsAssignableFrom(type))
             {
                 return (RealStatePtr L, int idx) =>
@@ -179,11 +181,11 @@ namespace XLua
                     return LuaAPI.lua_isnil(L, idx) || LuaAPI.lua_isfunction(L, idx) || fixTypeCheck(L, idx);
                 };
             }
-            else if (type.IsEnum())
+            else if (type.IsEnum())     /* 如果是枚举类型 */
             {
                 return fixTypeCheck;
             }
-            else if (type.IsInterface())
+            else if (type.IsInterface())    /* 如果是接口类型 */
             {
                 return (RealStatePtr L, int idx) =>
                 {
@@ -192,28 +194,29 @@ namespace XLua
             }
             else
             {
-                if ((type.IsClass() && type.GetConstructor(System.Type.EmptyTypes) != null)) //class has default construtor
+                /* 如果是有默认函数的class类型 */
+                if (type.IsClass() && type.GetConstructor(Type.EmptyTypes) != null) //class has default construtor
                 {
                     return (RealStatePtr L, int idx) =>
                     {
                         return LuaAPI.lua_isnil(L, idx) || LuaAPI.lua_istable(L, idx) || fixTypeCheck(L, idx);
                     };
                 }
-                else if (type.IsValueType())
+                else if (type.IsValueType())    /* 如果是值类型，C#中的值类型出了枚举，都是struct结构，所以可以判断元素是否为table */
                 {
                     return (RealStatePtr L, int idx) =>
                     {
                         return LuaAPI.lua_istable(L, idx) || fixTypeCheck(L, idx);
                     };
                 }
-                else if (type.IsArray)
+                else if (type.IsArray)          /* 如果是数组类型 */
                 {
                     return (RealStatePtr L, int idx) =>
                     {
                         return LuaAPI.lua_isnil(L, idx) || LuaAPI.lua_istable(L, idx) || fixTypeCheck(L, idx);
                     };
                 }
-                else
+                else                            /* 其他类型的检测 */
                 {
                     return (RealStatePtr L, int idx) =>
                     {
