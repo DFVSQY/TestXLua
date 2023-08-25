@@ -123,6 +123,9 @@ namespace XLua
         internal ObjectCheckers objectCheckers;
         internal ObjectCasters objectCasters;
 
+        /// <summary>
+        /// 用于维护id和C#对象的映射关系，传递到Lua栈的C#对象实际上是id，通过id可以获取对应的C#对象
+        /// </summary>
         internal readonly ObjectPool objects = new ObjectPool();
         internal readonly Dictionary<object, int> reverseMap = new Dictionary<object, int>(new ReferenceEqualsComparer());
 		internal LuaEnv luaEnv;
@@ -904,11 +907,14 @@ namespace XLua
             return (objectCasters.GetCaster(typeof(object))(L, index, null));
         }
 
+        /// <summary>
+        /// 获取所属Lua栈中指定位置元素的类型
+        /// </summary>
         public Type GetTypeOf(RealStatePtr L, int idx)
         {
             Type type = null;
             int type_id = LuaAPI.xlua_gettypeid(L, idx);
-            if (type_id != -1)
+            if (type_id != -1)                              /* 如果为有效类型则从类型映射表中查找 */
             {
                 typeMap.TryGetValue(type_id, out type);
             }
@@ -1078,7 +1084,9 @@ namespace XLua
         /// </summary> 
         Dictionary<Type, int> typeIdMap = new Dictionary<Type, int>();
 
-        //only store the type id to type map for struct
+        /// <summary>
+        /// only store the type id to type map for struct
+        /// </summary>
         Dictionary<int, Type> typeMap = new Dictionary<int, Type>();
 
         public int GetTypeId(RealStatePtr L, Type type)
@@ -1417,28 +1425,29 @@ namespace XLua
         private object getCsObj(RealStatePtr L, int index, int udata)
         {
             object obj;
-            if (udata == -1)
+            if (udata == -1)                /* 无效的对象ID */
             {
+                /* 非userdata类型则不是C#对象 */
                 if (LuaAPI.lua_type(L, index) != LuaTypes.LUA_TUSERDATA) return null;
 
-                Type type = GetTypeOf(L, index);
+                Type type = GetTypeOf(L, index);            /* 获取userdata所属类型 */
                 if (type == typeof(decimal))
                 {
                     decimal v;
-                    Get(L, index, out v);
+                    Get(L, index, out v);                   /* 返回decimal值 */
                     return v;
                 }
                 GetCSObject get;
                 if (type != null && custom_get_funcs.TryGetValue(type, out get))
                 {
-                    return get(L, index);
+                    return get(L, index);   /* 根据对应类型的方法获取lua栈中存储的C#对象 */
                 }
                 else
                 {
                     return null;
                 }
             }
-            else if (objects.TryGetValue(udata, out obj))
+            else if (objects.TryGetValue(udata, out obj))       /* 根据对象id获取到对象 */
             {
 #if !UNITY_5 && !XLUA_GENERAL && !UNITY_2017 && !UNITY_2017_1_OR_NEWER && !UNITY_2018
                 if (obj != null && obj is UnityEngine.Object && ((obj as UnityEngine.Object) == null))
@@ -1588,10 +1597,24 @@ namespace XLua
         public delegate object GetCSObject(RealStatePtr L, int idx);
         public delegate void UpdateCSObject(RealStatePtr L, int idx, object obj);
 
+        /// <summary>
+        /// 记录将指定类型的C#对象压入Lua栈的方法
+        /// </summary>
         private Dictionary<Type, PushCSObject> custom_push_funcs = new Dictionary<Type, PushCSObject>();
+
+        /// <summary>
+        /// 记录从Lua栈中获取指定类型的C#对象的方法
+        /// </summary>
         private Dictionary<Type, GetCSObject> custom_get_funcs = new Dictionary<Type, GetCSObject>();
+
+        /// <summary>
+        /// 记录Lua栈中指定类型的C#对象更新的方式
+        /// </summary>
         private Dictionary<Type, UpdateCSObject> custom_update_funcs = new Dictionary<Type, UpdateCSObject>();
 
+        /// <summary>
+        /// 注册某个类型在Lua栈中的操作方法（压入，获取，更新方法）
+        /// </summary>
         void registerCustomOp(Type type, PushCSObject push, GetCSObject get, UpdateCSObject update)
         {
             if (push != null) custom_push_funcs.Add(type, push);
@@ -1599,6 +1622,9 @@ namespace XLua
             if (update != null) custom_update_funcs.Add(type, update);
         }
 
+        /// <summary>
+        /// 是否包含某个对象的压入Lua栈的方法
+        /// </summary>
         public bool HasCustomOp(Type type)
         {
             return custom_push_funcs.ContainsKey(type);

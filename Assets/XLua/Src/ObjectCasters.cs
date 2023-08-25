@@ -161,7 +161,7 @@ namespace XLua
                     object obj = translator.SafeGetCSObj(L, idx);
                     if (obj != null)
                     {
-                        return type.IsAssignableFrom(obj.GetType());
+                        return type.IsAssignableFrom(obj.GetType());    /* 栈中的C#对象是否可以为指定类型 */
                     }
                     else
                     {
