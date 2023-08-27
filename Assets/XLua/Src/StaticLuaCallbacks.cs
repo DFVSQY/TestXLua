@@ -853,20 +853,20 @@ namespace XLua
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
                 string className = LuaAPI.lua_tostring(L, 1);
                 Type type = translator.FindType(className);
-                if (type != null)
+                if (type != null)   /* 在程序集中找到了该类型 */
                 {
-                    if (translator.GetTypeId(L, type) >= 0)
+                    if (translator.GetTypeId(L, type) >= 0) /* 并且有记录该类型的对应的类型id */
                     {
-                        LuaAPI.lua_pushboolean(L, true);
+                        LuaAPI.lua_pushboolean(L, true);    /* 则返回true，标记查找成功 */
                     }
                     else
                     {
-                        return LuaAPI.luaL_error(L, "can not load type " + type);
+                        return LuaAPI.luaL_error(L, "can not load type " + type);   /* 没有正确类型id时，返回错误信息 */
                     }
                 }
                 else
                 {
-                    LuaAPI.lua_pushnil(L);
+                    LuaAPI.lua_pushnil(L);  /* 程序集中没有该类型，则返回nil */
                 }
                 return 1;
             }

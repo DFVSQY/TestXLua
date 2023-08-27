@@ -482,6 +482,9 @@ namespace XLua
             }
         }
 
+        /// <summary>
+        /// fqn：Fully Qualified Name（完全限定名称）
+        /// </summary>
         private string init_xlua = @" 
             local metatable = {}
             local rawget = rawget

@@ -311,13 +311,22 @@ LUA_API int xlua_psettable_bypath(lua_State* L, int idx, const char *path) {
 }
 
 static int c_lua_getglobal(lua_State* L) {
+	/*
+	lua_tostring函数将栈中1位置处的元素转换成字符串并返回，并不从栈中弹出元素。
+	lua_getglobal函数从全局环境中获取指定名称的值并将其入栈。
+	*/
 	lua_getglobal(L, lua_tostring(L, 1));
 	return 1;
 }
 
 LUA_API int xlua_getglobal (lua_State *L, const char *name) {
+	/* 将函数c_lua_getglobal入栈 */
 	lua_pushcfunction(L, c_lua_getglobal);
+
+	/* 将参数入栈 */
 	lua_pushstring(L, name);
+
+	/* 调用函数c_lua_getglobal，返回0代表成功，非0代表失败，函数和参数从栈中弹出，函数结果入栈 */
 	return lua_pcall(L, 1, 1, 0);
 }
 

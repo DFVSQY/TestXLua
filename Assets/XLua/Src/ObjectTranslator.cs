@@ -669,6 +669,9 @@ namespace XLua
             return creator(LuaAPI.luaL_ref(L), luaEnv);
         }
 
+        /// <summary>
+        /// 数组对应的元表在Registry中的key
+        /// </summary>
         int common_array_meta = -1;
         public void CreateArrayMetatable(RealStatePtr L)
         {
@@ -678,6 +681,9 @@ namespace XLua
                  typeof(System.Array), StaticLuaCallbacks.ArrayIndexer, StaticLuaCallbacks.ArrayNewIndexer);
         }
 
+        /// <summary>
+        /// delegate对应的元表在Registry中的key
+        /// </summary>
         int common_delegate_meta = -1;
         public void CreateDelegateMetatable(RealStatePtr L)
         {
@@ -725,45 +731,95 @@ namespace XLua
 
         public void OpenLib(RealStatePtr L)
 		{
+            /*
+            将xlua全局变量入栈
+            */
             if (0 != LuaAPI.xlua_getglobal(L, "xlua"))
             {
                 throw new Exception("call xlua_getglobal fail!" + LuaAPI.lua_tostring(L, -1));
             }
+
+            /*
+            xlua['import_type'] = importTypeFunction
+            */
             LuaAPI.xlua_pushasciistring(L, "import_type");
 			LuaAPI.lua_pushstdcallcfunction(L,importTypeFunction);
 			LuaAPI.lua_rawset(L, -3);
+
+            /* 
+            xlua['import_generic_type'] = ImportGenericType
+            */
             LuaAPI.xlua_pushasciistring(L, "import_generic_type");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ImportGenericType);
             LuaAPI.lua_rawset(L, -3);
+
+            /*
+            xlua['cast'] = castFunction
+            */
             LuaAPI.xlua_pushasciistring(L, "cast");
             LuaAPI.lua_pushstdcallcfunction(L, castFunction);
             LuaAPI.lua_rawset(L, -3);
+
+            /*
+            xlua['load_assembly'] = loadAssemblyFunction
+            */
             LuaAPI.xlua_pushasciistring(L, "load_assembly");
 			LuaAPI.lua_pushstdcallcfunction(L,loadAssemblyFunction);
             LuaAPI.lua_rawset(L, -3);
+
+            /*
+            xlua['access'] = XLuaAccess
+            */
             LuaAPI.xlua_pushasciistring(L, "access");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaAccess);
             LuaAPI.lua_rawset(L, -3);
+
+            /*
+            xlua['private_accessible'] = XLuaPrivateAccessible
+            */
             LuaAPI.xlua_pushasciistring(L, "private_accessible");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaPrivateAccessible);
             LuaAPI.lua_rawset(L, -3);
+
+            /*
+            xlua['metatable_operation'] = XLuaMetatableOperation
+            */
             LuaAPI.xlua_pushasciistring(L, "metatable_operation");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaMetatableOperation);
             LuaAPI.lua_rawset(L, -3);
+
+            /*
+            xlua['tofunction'] = ToFunction
+            */
             LuaAPI.xlua_pushasciistring(L, "tofunction");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ToFunction);
             LuaAPI.lua_rawset(L, -3);
+
+            /*
+            xlua['get_generic_method'] = GetGenericMethod
+            */
             LuaAPI.xlua_pushasciistring(L, "get_generic_method");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.GetGenericMethod);
             LuaAPI.lua_rawset(L, -3);
+
+            /*
+            xlua['release'] = ReleaseCsObject
+            */
             LuaAPI.xlua_pushasciistring(L, "release");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ReleaseCsObject);
             LuaAPI.lua_rawset(L, -3);
+
+            /* 弹出xlua */
             LuaAPI.lua_pop(L, 1);
 
+            /* 创建一个table并入栈，数组大小部分为1，哈希大小部分为4 */
             LuaAPI.lua_createtable(L, 1, 4); // 4 for __gc, __tostring, __index, __newindex
+            /* 将创建的table放入Registry中，并返回在Registry中的key */
             common_array_meta = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
+
+            /* 创建一个table并入栈，数组大小部分为1，哈希大小部分为4 */
             LuaAPI.lua_createtable(L, 1, 4); // 4 for __gc, __tostring, __index, __newindex
+            /* 将创建的table放入Registry中，并返回在Registry中的key */
             common_delegate_meta = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
         }
 		
@@ -813,6 +869,7 @@ namespace XLua
 		
 		internal Type FindType(string className, bool isQualifiedName = false)
 		{
+            /* 优先尝试从程序集中查找 */
             foreach (Assembly assembly in assemblies)
 			{
                 Type klass = assembly.GetType(className);
@@ -825,6 +882,9 @@ namespace XLua
             int p1 = className.IndexOf('[');
             if (p1 > 0 && !isQualifiedName)
             {
+                /*
+                将字符串 xxx[xx,xx,xx] 中的方括号内容用逗号分隔并存储到generic_params中
+                */
                 string qualified_name = className.Substring(0, p1 + 1);
                 string[] generic_params = className.Substring(p1 + 1, className.Length - qualified_name.Length - 1).Split(',');
                 for(int i = 0; i < generic_params.Length; i++)
