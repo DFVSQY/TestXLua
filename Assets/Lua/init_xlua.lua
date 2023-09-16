@@ -1,7 +1,7 @@
 --[[
     以下代码摘自LuaEnv中的init_xlua字段，
     该段代码用于初始化一些xlua环境
---]] 
+--]]
 
 local metatable = {}
 local rawget = rawget
@@ -39,6 +39,9 @@ function metatable:__newindex()
     error('No such type: ' .. rawget(self, '.fqn'), 2)
 end
 
+--[[
+    !!! 支持函数调用的形式，暂时还没搞清楚怎么用？
+--]]
 -- A non-type has been called; e.g. foo = System.Foo()
 function metatable:__call(...)
     local n = select('#', ...)
@@ -140,12 +143,24 @@ xlua.hotfix = function(cs, field, func)
     end
     xlua.private_accessible(cs)
 end
+
+--[[ 
+    获取cs对象的元表
+ ]]
 xlua.getmetatable = function(cs)
     return xlua.metatable_operation(cs)
 end
+
+--[[ 
+    设置cs对象的元表
+ ]]
 xlua.setmetatable = function(cs, mt)
     return xlua.metatable_operation(cs, mt)
 end
+
+--[[ 
+    设置一个类型指定字段的新实现
+ ]]
 xlua.setclass = function(parent, name, impl)
     impl.UnderlyingSystemType = parent[name].UnderlyingSystemType
     rawset(parent, name, impl)
