@@ -100,14 +100,22 @@ namespace XLua
 
                 /* 
                 用于初始化xLua库。这个接口会注册xLua库中的所有函数和变量，以便它们可以在Lua代码中使用。 
+                在此处，初始化了全局变量xlua以及其内部元素。
                 */
                 LuaAPI.luaopen_xlua(rawL);
 
-                /* 注册uint64库 */
+                /* 
+                用于初始化uint64库。
+                在此处，初始化了全局变量uint64以及其内部元素。
+                */
                 LuaAPI.luaopen_i64lib(rawL);
 
                 translator = new ObjectTranslator(this, rawL);
                 translator.createFunctionMetatable(rawL);
+
+                /*
+                将一些c#函数注入全局表xlua中，并在Registry中创建通用的数组和委托元表。
+                */
                 translator.OpenLib(rawL);
                 ObjectTranslatorPool.Instance.Add(rawL, translator);
 
