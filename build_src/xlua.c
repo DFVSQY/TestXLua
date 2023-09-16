@@ -30,35 +30,78 @@ static int tag = 0;
 static const char *const hooknames[] = {"call", "return", "line", "count", "tail return"};
 static int hook_index = -1;
 
+/*
+创建一个唯一的全局标识符，
+*/
 LUA_API void *xlua_tag () 
 {
 	return &tag;
 }
 
+/*
+获取Registry索引
+*/
 LUA_API int xlua_get_registry_index() {
 	return LUA_REGISTRYINDEX;
 }
 
+/*
+获取xlua库版本
+*/
 LUA_API int xlua_get_lib_version() {
 	return 105;
 }
 
+/*
+安全的转换cs对象，根据其关联的元表中是否存在xlua_tag的标记来判断是否可以转换成cs对象。
+对于在lua中引用的cs对象，xlua会在其对应的userdata的元表中记录一个key为&tag（lightuserdata）的标记。
+*/
 LUA_API int xlua_tocsobj_safe(lua_State *L,int index) {
+	/*
+	获取lua栈中指定索引的userdata，并返回内容块地址，但不从栈中弹出元素
+	*/
 	int *udata = (int *)lua_touserdata (L,index);
+
+	/* 如果存在有效抵制 */
 	if (udata != NULL) {
+		/*
+		lua_getmetatable的作用是检查给定索引处的值是否有元表。
+		如果有元表，该函数会将元表压入栈，并返回1。如果没有元表，该函数不会改变栈，并返回0。
+		*/
 		if (lua_getmetatable(L,index)) {
+			/*
+			lua_pushlightuserdata函数的作用是将一个C指针（void*）压入Lua栈。
+			这个C指针被称为轻量级用户数据（light userdata）。
+			*/
 		    lua_pushlightuserdata(L, &tag);
+
+			/*
+			在调用lua_rawget函数时，我们需要先将表和键压入栈中。
+			然后，调用lua_rawget(L, -2)，其中-2表示栈顶倒数第二个元素，也就是我们刚刚压入的表。
+			这个函数会从表中获取键对应的值，并将值压入栈顶，但它会弹出key的值，不会弹出table值。
+			*/
 			lua_rawget(L,-2);
+
+			/*
+			如果新压入的栈顶元素不为nil，lua_isnil不会弹出相关元素。
+			*/
 			if (!lua_isnil (L,-1)) {
+				/*
+				弹出元表和key两个元素
+				*/
 				lua_pop (L, 2);
-				return *udata;
+				return *udata;			/* 返回正确的userdata地址 */
 			}
-			lua_pop (L, 2);
+			lua_pop (L, 2);				/* 弹出元表和key两个元素 */
 		}
 	}
-	return -1;
+	return -1;				/* 返回个错误值 */
 }
 
+/*
+快速转换方式，不需要检测userdata对应的元表中的tag标记，
+该userdata可能是非cs的对象，所以直接转换可能不安全。
+*/
 LUA_API int xlua_tocsobj_fast (lua_State *L,int index) {
 	int *udata = (int *)lua_touserdata (L,index);
 
